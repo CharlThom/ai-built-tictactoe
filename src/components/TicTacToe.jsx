@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './TicTacToe.css';
 
 const TicTacToe = () => {
   const [board, setBoard] = useState(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true);
+  const [gameStatus, setGameStatus] = useState('Next player: X');
   const [gameOver, setGameOver] = useState(false);
-  const [winner, setWinner] = useState(null);
 
-  const calculateWinner = (squares) => {
+  const checkWinner = (squares) => {
     const lines = [
       [0, 1, 2],
       [3, 4, 5],
@@ -18,6 +18,7 @@ const TicTacToe = () => {
       [0, 4, 8],
       [2, 4, 6],
     ];
+
     for (let i = 0; i < lines.length; i++) {
       const [a, b, c] = lines[i];
       if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
@@ -27,37 +28,29 @@ const TicTacToe = () => {
     return null;
   };
 
-  const handleCellClick = (index) => {
-    // Validation: Check if cell is already filled
-    if (board[index]) {
-      return;
-    }
+  const checkDraw = (squares) => {
+    return squares.every(cell => cell !== null);
+  };
 
-    // Validation: Check if game is over
-    if (gameOver) {
-      return;
+  useEffect(() => {
+    const winner = checkWinner(board);
+    if (winner) {
+      setGameStatus(`Winner: ${winner}`);
+      setGameOver(true);
+    } else if (checkDraw(board)) {
+      setGameStatus('Game Draw!');
+      setGameOver(true);
+    } else {
+      setGameStatus(`Next player: ${isXNext ? 'X' : 'O'}`);
     }
+  }, [board, isXNext]);
 
-    // Create new board with player's move
+  const handleClick = (index) => {
+    if (board[index] || gameOver) return;
+
     const newBoard = [...board];
     newBoard[index] = isXNext ? 'X' : 'O';
     setBoard(newBoard);
-
-    // Check for winner
-    const winnerPlayer = calculateWinner(newBoard);
-    if (winnerPlayer) {
-      setWinner(winnerPlayer);
-      setGameOver(true);
-      return;
-    }
-
-    // Check for draw
-    if (newBoard.every(cell => cell !== null)) {
-      setGameOver(true);
-      return;
-    }
-
-    // Switch player turn
     setIsXNext(!isXNext);
   };
 
@@ -65,36 +58,28 @@ const TicTacToe = () => {
     setBoard(Array(9).fill(null));
     setIsXNext(true);
     setGameOver(false);
-    setWinner(null);
-  };
-
-  const getStatus = () => {
-    if (winner) {
-      return `Winner: ${winner}`;
-    }
-    if (gameOver) {
-      return "It's a Draw!";
-    }
-    return `Current Player: ${isXNext ? 'X' : 'O'}`;
+    setGameStatus('Next player: X');
   };
 
   return (
     <div className="game-container">
       <h1>Tic Tac Toe</h1>
-      <div className="status">{getStatus()}</div>
+      <div className="status-display">
+        <p className={gameOver ? 'game-over' : ''}>{gameStatus}</p>
+      </div>
       <div className="board">
         {board.map((cell, index) => (
           <div
             key={index}
-            className={`cell ${cell ? 'filled' : ''} ${cell === 'X' ? 'x' : ''} ${cell === 'O' ? 'o' : ''}`}
-            onClick={() => handleCellClick(index)}
+            className={`cell ${cell ? 'filled' : ''}`}
+            onClick={() => handleClick(index)}
           >
-            {cell}
+            {cell && <span className={`symbol ${cell.toLowerCase()}`}>{cell}</span>}
           </div>
         ))}
       </div>
       <button className="reset-button" onClick={resetGame}>
-        Reset Game
+        New Game
       </button>
     </div>
   );
