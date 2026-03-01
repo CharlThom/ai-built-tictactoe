@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import './TicTacToe.css';
+import styles from './TicTacToe.module.css';
 
 type Player = 'X' | 'O' | null;
 
 const TicTacToe: React.FC = () => {
   const [board, setBoard] = useState<Player[]>(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true);
-  const [winner, setWinner] = useState<Player | 'Draw' | null>(null);
+  const [winner, setWinner] = useState<Player>(null);
+  const [winningLine, setWinningLine] = useState<number[]>([]);
 
-  const calculateWinner = (squares: Player[]): Player | null => {
+  const calculateWinner = (squares: Player[]): { winner: Player; line: number[] } => {
     const lines = [
       [0, 1, 2],
       [3, 4, 5],
@@ -19,12 +20,13 @@ const TicTacToe: React.FC = () => {
       [0, 4, 8],
       [2, 4, 6],
     ];
+
     for (const [a, b, c] of lines) {
       if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        return squares[a];
+        return { winner: squares[a], line: [a, b, c] };
       }
     }
-    return null;
+    return { winner: null, line: [] };
   };
 
   const handleClick = (index: number) => {
@@ -34,11 +36,10 @@ const TicTacToe: React.FC = () => {
     newBoard[index] = isXNext ? 'X' : 'O';
     setBoard(newBoard);
 
-    const gameWinner = calculateWinner(newBoard);
-    if (gameWinner) {
-      setWinner(gameWinner);
-    } else if (newBoard.every(cell => cell !== null)) {
-      setWinner('Draw');
+    const result = calculateWinner(newBoard);
+    if (result.winner) {
+      setWinner(result.winner);
+      setWinningLine(result.line);
     } else {
       setIsXNext(!isXNext);
     }
@@ -48,41 +49,42 @@ const TicTacToe: React.FC = () => {
     setBoard(Array(9).fill(null));
     setIsXNext(true);
     setWinner(null);
+    setWinningLine([]);
   };
 
   const getStatus = () => {
-    if (winner === 'Draw') return 'Game Draw!';
-    if (winner) return `Winner: ${winner}`;
+    if (winner) {
+      return `Winner: ${winner}`;
+    }
+    if (board.every((cell) => cell !== null)) {
+      return "It's a Draw!";
+    }
     return `Next Player: ${isXNext ? 'X' : 'O'}`;
   };
 
   return (
-    <div className="tictactoe-container">
-      <div className="game-header">
-        <h1>Tic Tac Toe</h1>
+    <div className={styles.container}>
+      <div className={styles.statusArea}>
+        <div className={styles.status}>{getStatus()}</div>
+        <button className={styles.resetButton} onClick={resetGame}>
+          Reset Game
+        </button>
       </div>
-      
-      <div className="game-status">
-        <h2>{getStatus()}</h2>
-      </div>
-
-      <div className="game-board">
+      <div className={styles.gameBoard}>
         {board.map((cell, index) => (
           <button
             key={index}
-            className={`cell ${cell ? 'filled' : ''}`}
+            className={`${styles.cell} ${winningLine.includes(index) ? styles.winner : ''}`}
             onClick={() => handleClick(index)}
             disabled={!!cell || !!winner}
           >
-            {cell}
+            {cell && (
+              <span className={cell === 'X' ? styles.symbolX : styles.symbolO}>
+                {cell}
+              </span>
+            )}
           </button>
         ))}
-      </div>
-
-      <div className="game-controls">
-        <button className="reset-button" onClick={resetGame}>
-          Reset Game
-        </button>
       </div>
     </div>
   );
