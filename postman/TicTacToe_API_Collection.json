@@ -1,0 +1,418 @@
+{
+  "info": {
+    "name": "TicTacToe API Collection",
+    "description": "Interactive API playground for testing TicTacToe game endpoints. Import this collection into Postman to test all game operations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "game_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Game Management",
+      "item": [
+        {
+          "name": "Create New Game",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has game_id', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('game_id');",
+                  "    pm.collectionVariables.set('game_id', jsonData.game_id);",
+                  "});",
+                  "",
+                  "pm.test('Initial state is correct', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('in_progress');",
+                  "    pm.expect(jsonData.current_player).to.eql('X');",
+                  "    pm.expect(jsonData.board).to.have.lengthOf(9);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"player_x\": \"Alice\",\n  \"player_o\": \"Bob\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/game",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "game"]
+            },
+            "description": "Creates a new TicTacToe game session. Returns game_id to be used in subsequent requests."
+          },
+          "response": [
+            {
+              "name": "Success Example",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"player_x\": \"Alice\",\n  \"player_o\": \"Bob\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"game_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"status\": \"in_progress\",\n  \"current_player\": \"X\",\n  \"board\": [null, null, null, null, null, null, null, null, null],\n  \"player_x\": \"Alice\",\n  \"player_o\": \"Bob\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Game State",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains game state', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('board');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "    pm.expect(jsonData).to.have.property('current_player');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/game/{{game_id}}/state",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "game", "{{game_id}}", "state"]
+            },
+            "description": "Retrieves the current state of the game including board positions, current player, and game status."
+          },
+          "response": []
+        },
+        {
+          "name": "Restart Game",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Board is reset', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.board.every(cell => cell === null)).to.be.true;",
+                  "    pm.expect(jsonData.status).to.eql('in_progress');",
+                  "    pm.expect(jsonData.current_player).to.eql('X');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/game/{{game_id}}/restart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "game", "{{game_id}}", "restart"]
+            },
+            "description": "Resets the game board to initial state while keeping the same game_id and players."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Game Moves",
+      "item": [
+        {
+          "name": "Make Move - Position 0 (Top-Left)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Move was applied', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.board[0]).to.not.be.null;",
+                  "});",
+                  "",
+                  "pm.test('Player switched', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.current_player).to.be.oneOf(['X', 'O']);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/game/{{game_id}}/move",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "game", "{{game_id}}", "move"]
+            },
+            "description": "Makes a move at the specified position (0-8). Position 0 is top-left corner."
+          },
+          "response": []
+        },
+        {
+          "name": "Make Move - Position 4 (Center)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": 4\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/game/{{game_id}}/move",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "game", "{{game_id}}", "move"]
+            },
+            "description": "Makes a move at center position (4)."
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Move - Out of Bounds",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error message present', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/game/{{game_id}}/move",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "game", "{{game_id}}", "move"]
+            },
+            "description": "Tests validation by attempting an invalid position."
+          },
+          "response": [
+            {
+              "name": "Error Example",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Invalid position\",\n  \"message\": \"Position must be between 0 and 8\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Test Scenarios",
+      "item": [
+        {
+          "name": "Complete Game - X Wins (Top Row)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// This scenario creates a game where X wins with top row",
+                  "// Moves: X(0), O(3), X(1), O(4), X(2) -> X wins"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "item": [
+            {
+              "name": "1. Create Game",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "pm.collectionVariables.set('game_id', jsonData.game_id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"player_x\": \"Alice\", \"player_o\": \"Bob\"}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/game",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "game"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2. X plays position 0",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\"position\": 0}"},
+                "url": {
+                  "raw": "{{base_url}}/api/v1/game/{{game_id}}/move",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "game", "{{game_id}}", "move"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3. O plays position 3",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\"position\": 3}"},
+                "url": {
+                  "raw": "{{base_url}}/api/v1/game/{{game_id}}/move",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "game", "{{game_id}}", "move"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "4. X plays position 1",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\"position\": 1}"},
+                "url": {
+                  "raw": "{{base_url}}/api/v1/game/{{game_id}}/move",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "game", "{{game_id}}", "move"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "5. O plays position 4",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\"position\": 4}"},
+                "url": {
+                  "raw": "{{base_url}}/api/v1/game/{{game_id}}/move",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "game", "{{game_id}}", "move"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "6. X plays position 2 - WINS!",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('X wins the game', function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql('won');",
+                      "    pm.expect(jsonData.winner).to.eql('X');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\"position\": 2}"},
+                "url": {
+                  "raw": "{{base_url}}/api/v1/game/{{game_id}}/move",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "game", "{{game_id}}", "move"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
