@@ -16,29 +16,16 @@ h1 {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.status-display {
-  background: white;
-  padding: 15px 30px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.status-display p {
+.status {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #333;
-  margin: 0;
-}
-
-.status-display p.game-over {
-  color: #e74c3c;
-  animation: pulse 0.5s ease-in-out;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  color: white;
+  margin-bottom: 20px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  min-width: 250px;
+  text-align: center;
 }
 
 .board {
@@ -53,12 +40,12 @@ h1 {
   background: white;
   border: none;
   border-radius: 10px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 3rem;
   font-weight: bold;
+  cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -73,15 +60,15 @@ h1 {
 }
 
 .symbol {
-  animation: fadeIn 0.3s ease-in;
+  animation: fadeIn 0.3s ease;
 }
 
 .symbol.x {
-  color: #3498db;
+  color: #e74c3c;
 }
 
 .symbol.o {
-  color: #e74c3c;
+  color: #3498db;
 }
 
 @keyframes fadeIn {
@@ -95,24 +82,27 @@ h1 {
   }
 }
 
-.reset-button {
-  background: white;
-  color: #667eea;
-  border: none;
+.restart-button {
   padding: 15px 40px;
   font-size: 1.2rem;
   font-weight: bold;
-  border-radius: 25px;
+  color: white;
+  background: #e74c3c;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-.reset-button:hover {
-  background: #667eea;
-  color: white;
+.restart-button:hover {
+  background: #c0392b;
   transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+}
+
+.restart-button:active {
+  transform: translateY(0);
 }
 
 @media (max-width: 768px) {
@@ -130,7 +120,12 @@ h1 {
     font-size: 2rem;
   }
 
-  .status-display p {
+  .status {
     font-size: 1.2rem;
+  }
+
+  .restart-button {
+    padding: 12px 30px;
+    font-size: 1rem;
   }
 }
