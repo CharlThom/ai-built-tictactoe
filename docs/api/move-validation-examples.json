@@ -1,0 +1,219 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "TicTacToe Turn Management API",
+    "version": "1.0.0",
+    "description": "API for managing player turns and validating moves"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api/v1",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/game/{game_id}/turn": {
+      "get": {
+        "summary": "Get current turn information",
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"},
+            "description": "Unique game identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current turn information",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/TurnInfo"},
+                "examples": {
+                  "active_game": {
+                    "value": {
+                      "game_id": "abc123",
+                      "current_player": "X",
+                      "turn_number": 5,
+                      "is_game_over": false,
+                      "next_player": "O"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Game not found",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/game/{game_id}/validate-move": {
+      "post": {
+        "summary": "Validate a move without executing it",
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/MoveRequest"},
+              "examples": {
+                "valid_move": {
+                  "value": {
+                    "player": "X",
+                    "position": {"row": 1, "col": 1}
+                  }
+                },
+                "corner_move": {
+                  "value": {
+                    "player": "O",
+                    "position": {"row": 0, "col": 0}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validation result",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ValidationResult"},
+                "examples": {
+                  "valid": {
+                    "value": {
+                      "valid": true,
+                      "message": "Move is valid",
+                      "position": {"row": 1, "col": 1}
+                    }
+                  },
+                  "position_occupied": {
+                    "value": {
+                      "valid": false,
+                      "message": "Position already occupied",
+                      "error_code": "POSITION_OCCUPIED",
+                      "occupied_by": "X"
+                    }
+                  },
+                  "wrong_turn": {
+                    "value": {
+                      "valid": false,
+                      "message": "Not your turn",
+                      "error_code": "NOT_YOUR_TURN",
+                      "current_player": "X"
+                    }
+                  },
+                  "game_finished": {
+                    "value": {
+                      "valid": false,
+                      "message": "Game already finished",
+                      "error_code": "GAME_ALREADY_FINISHED",
+                      "winner": "X"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"},
+                "examples": {
+                  "invalid_coordinates": {
+                    "value": {
+                      "error": "Invalid position coordinates",
+                      "error_code": "INVALID_COORDINATES",
+                      "details": "Row and column must be between 0 and 2"
+                    }
+                  },
+                  "invalid_player": {
+                    "value": {
+                      "error": "Invalid player",
+                      "error_code": "INVALID_PLAYER",
+                      "details": "Player must be X or O"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TurnInfo": {
+        "type": "object",
+        "properties": {
+          "game_id": {"type": "string"},
+          "current_player": {"type": "string", "enum": ["X", "O"]},
+          "turn_number": {"type": "integer", "minimum": 1},
+          "is_game_over": {"type": "boolean"},
+          "next_player": {"type": "string", "enum": ["X", "O", null]}
+        },
+        "required": ["game_id", "current_player", "turn_number", "is_game_over"]
+      },
+      "MoveRequest": {
+        "type": "object",
+        "properties": {
+          "player": {"type": "string", "enum": ["X", "O"]},
+          "position": {
+            "type": "object",
+            "properties": {
+              "row": {"type": "integer", "minimum": 0, "maximum": 2},
+              "col": {"type": "integer", "minimum": 0, "maximum": 2}
+            },
+            "required": ["row", "col"]
+          }
+        },
+        "required": ["player", "position"]
+      },
+      "ValidationResult": {
+        "type": "object",
+        "properties": {
+          "valid": {"type": "boolean"},
+          "message": {"type": "string"},
+          "error_code": {"type": "string"},
+          "position": {
+            "type": "object",
+            "properties": {
+              "row": {"type": "integer"},
+              "col": {"type": "integer"}
+            }
+          },
+          "current_player": {"type": "string"},
+          "occupied_by": {"type": "string"},
+          "winner": {"type": "string"}
+        },
+        "required": ["valid", "message"]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "error_code": {"type": "string"},
+          "details": {"type": "string"}
+        },
+        "required": ["error"]
+      }
+    }
+  }
+}
