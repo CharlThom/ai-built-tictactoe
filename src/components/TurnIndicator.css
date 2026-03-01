@@ -1,0 +1,119 @@
+.turn-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.status-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-message.player-x {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.status-message.player-o {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.status-message.game-over {
+  background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+  color: white;
+  font-size: 1.75rem;
+  animation: pulse 0.5s ease-in-out;
+}
+
+.status-text {
+  letter-spacing: 0.5px;
+}
+
+.player-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 8px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  animation: symbolPulse 1s ease-in-out infinite;
+}
+
+.reset-button {
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.reset-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+}
+
+.reset-button:active {
+  transform: translateY(0);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes symbolPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-message {
+    font-size: 1.25rem;
+    padding: 0.75rem 1.5rem;
+  }
+  
+  .status-message.game-over {
+    font-size: 1.5rem;
+  }
+  
+  .player-symbol {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.5rem;
+  }
+  
+  .reset-button {
+    padding: 0.6rem 1.5rem;
+    font-size: 1rem;
+  }
+}
