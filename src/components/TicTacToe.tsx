@@ -1,91 +1,48 @@
-import React, { useState } from 'react';
-import styles from './TicTacToe.module.css';
-
-type Player = 'X' | 'O' | null;
+import React from 'react';
+import { useGameState } from '../hooks/useGameState';
 
 const TicTacToe: React.FC = () => {
-  const [board, setBoard] = useState<Player[]>(Array(9).fill(null));
-  const [isXNext, setIsXNext] = useState(true);
-  const [winner, setWinner] = useState<Player>(null);
-  const [winningLine, setWinningLine] = useState<number[]>([]);
+  const { board, currentPlayer, winner, isDraw, isGameOver, makeMove, resetGame } = useGameState();
 
-  const calculateWinner = (squares: Player[]): { winner: Player; line: number[] } => {
-    const lines = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 4, 6],
-    ];
-
-    for (const [a, b, c] of lines) {
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        return { winner: squares[a], line: [a, b, c] };
-      }
-    }
-    return { winner: null, line: [] };
+  const handleCellClick = (index: number) => {
+    makeMove(index);
   };
 
-  const handleClick = (index: number) => {
-    if (board[index] || winner) return;
-
-    const newBoard = [...board];
-    newBoard[index] = isXNext ? 'X' : 'O';
-    setBoard(newBoard);
-
-    const result = calculateWinner(newBoard);
-    if (result.winner) {
-      setWinner(result.winner);
-      setWinningLine(result.line);
-    } else {
-      setIsXNext(!isXNext);
-    }
-  };
-
-  const resetGame = () => {
-    setBoard(Array(9).fill(null));
-    setIsXNext(true);
-    setWinner(null);
-    setWinningLine([]);
-  };
-
-  const getStatus = () => {
+  const getStatusMessage = () => {
     if (winner) {
-      return `Winner: ${winner}`;
+      return `Player ${winner} wins!`;
     }
-    if (board.every((cell) => cell !== null)) {
-      return "It's a Draw!";
+    if (isDraw) {
+      return "It's a draw!";
     }
-    return `Next Player: ${isXNext ? 'X' : 'O'}`;
+    return `Current player: ${currentPlayer}`;
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.statusArea}>
-        <div className={styles.status}>{getStatus()}</div>
-        <button className={styles.resetButton} onClick={resetGame}>
-          Reset Game
-        </button>
+    <div className="game-container">
+      <div className="game-status">
+        <h2>{getStatusMessage()}</h2>
       </div>
-      <div className={styles.gameBoard}>
+      
+      <div className="game-board">
         {board.map((cell, index) => (
-          <button
+          <div
             key={index}
-            className={`${styles.cell} ${winningLine.includes(index) ? styles.winner : ''}`}
-            onClick={() => handleClick(index)}
-            disabled={!!cell || !!winner}
+            className={`cell ${cell ? 'filled' : ''}`}
+            onClick={() => handleCellClick(index)}
           >
-            {cell && (
-              <span className={cell === 'X' ? styles.symbolX : styles.symbolO}>
-                {cell}
-              </span>
-            )}
-          </button>
+            {cell && <span className={`symbol symbol-${cell.toLowerCase()}`}>{cell}</span>}
+          </div>
         ))}
       </div>
+
+      {isGameOver && (
+        <div className="game-controls">
+          <button className="reset-button" onClick={resetGame}>
+            Play Again
+          </button>
+        </div>
+      )}
     </div>
   );
 };
