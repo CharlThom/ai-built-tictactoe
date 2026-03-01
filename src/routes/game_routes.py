@@ -1,132 +1,131 @@
-from flask import Blueprint, request, jsonify, g
-from src.middleware.subscription_middleware import (
-    require_premium,
-    check_game_limit_middleware,
-    SubscriptionMiddleware
-)
-from src.middleware.auth_middleware import require_auth
-from src.models.game import Game, GameMode
-from src.models.user import User
-from datetime import datetime
+from flask import Blueprint, request, jsonify, session
+from src.middleware.csrf_protection import csrf, get_csrf_token
+from src.models.game import Game
+from src.utils.validators import validate_move_input
+import logging
 
-game_bp = Blueprint('games', __name__, url_prefix='/api/games')
+game_bp = Blueprint('game', __name__, url_prefix='/api/game')
+logger = logging.getLogger(__name__)
 
-@game_bp.route('', methods=['POST'])
-@require_auth
-@check_game_limit_middleware
-def create_game():
-    """Create a new game with subscription-based limits"""
-    data = request.get_json()
-    user_id = g.user.id
-    
-    game_mode = data.get('mode', GameMode.STANDARD)
-    
-    # Premium-only game modes
-    premium_modes = [GameMode.TOURNAMENT, GameMode.RANKED, GameMode.CUSTOM]
-    
-    if game_mode in premium_modes:
-        if not SubscriptionMiddleware.has_premium_access(user_id):
-            return jsonify({
-                'error': 'Premium subscription required for this game mode',
-                'code': 'PREMIUM_MODE',
-                'mode': game_mode
-            }), 403
-    
-    # Create game
-    game = Game(
-        user_id=user_id,
-        mode=game_mode,
-        board_state='         ',  # Empty 3x3 board
-        current_player='X',
-        status='active'
-    )
-    game.save()
-    
-    return jsonify({
-        'success': True,
-        'game': game.to_dict(),
-        'subscription_info': g.game_limit_info
-    }), 201
+# In-memory game storage (use database in production)
+games = {}
 
-@game_bp.route('/tournament', methods=['POST'])
-@require_auth
-@require_premium
-def create_tournament():
-    """Create tournament game - premium feature only"""
-    data = request.get_json()
-    user_id = g.user.id
-    
-    tournament_name = data.get('name', 'Unnamed Tournament')
-    max_players = data.get('max_players', 8)
-    
-    game = Game(
-        user_id=user_id,
-        mode=GameMode.TOURNAMENT,
-        board_state='         ',
-        current_player='X',
-        status='waiting',
-        metadata={
-            'tournament_name': tournament_name,
-            'max_players': max_players,
-            'players': [user_id]
-        }
-    )
-    game.save()
-    
-    return jsonify({
-        'success': True,
-        'tournament': game.to_dict()
-    }), 201
+@game_bp.route('/csrf-token', methods=['GET'])
+def get_token():
+    """Endpoint to retrieve CSRF token for the session"""
+    try:
+        token = get_csrf_token()
+        return jsonify({
+            'csrf_token': token,
+            'session_id': session.get('session_id')
+        }), 200
+    except Exception as e:
+        logger.error(f"Error generating CSRF token: {e}")
+        return jsonify({'error': 'Failed to generate token'}), 500
 
-@game_bp.route('/stats/advanced', methods=['GET'])
-@require_auth
-@require_premium
-def get_advanced_stats():
-    """Get advanced game statistics - premium feature"""
-    user_id = g.user.id
-    
-    games = Game.query.filter_by(user_id=user_id).all()
-    
-    stats = {
-        'total_games': len(games),
-        'wins': len([g for g in games if g.winner_id == user_id]),
-        'losses': len([g for g in games if g.winner_id and g.winner_id != user_id]),
-        'draws': len([g for g in games if g.status == 'draw']),
-        'win_rate': 0,
-        'average_moves': 0,
-        'favorite_opening': None,
-        'performance_by_mode': {}
-    }
-    
-    if stats['total_games'] > 0:
-        stats['win_rate'] = round((stats['wins'] / stats['total_games']) * 100, 2)
-    
-    return jsonify({
-        'success': True,
-        'stats': stats
-    }), 200
+@game_bp.route('/move', methods=['POST'])
+@csrf.csrf_protect
+def make_move():
+    """Protected endpoint for making a game move"""
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        if not validate_move_input(data):
+            return jsonify({'error': 'Invalid move data'}), 400
+        
+        game_id = data.get('game_id')
+        position = data.get('position')
+        player_id = session.get('player_id')
+        
+        if not player_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        game = games.get(game_id)
+        if not game:
+            return jsonify({'error': 'Game not found'}), 404
+        
+        # Server-side validation of move
+        if not game.is_valid_move(position, player_id):
+            return jsonify({'error': 'Invalid move'}), 400
+        
+        game.make_move(position, player_id)
+        
+        logger.info(f"Player {player_id} made move at position {position} in game {game_id}")
+        
+        return jsonify({
+            'success': True,
+            'game_state': game.get_state(),
+            'csrf_token': get_csrf_token()  # Rotate token after action
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error processing move: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 
-@game_bp.route('/subscription-status', methods=['GET'])
-@require_auth
-def get_subscription_status():
-    """Get current user's subscription status and game limits"""
-    user_id = g.user.id
-    
-    has_premium = SubscriptionMiddleware.has_premium_access(user_id)
-    limit_info = SubscriptionMiddleware.check_game_limit(user_id)
-    subscription = SubscriptionMiddleware.get_user_subscription(user_id)
-    
-    return jsonify({
-        'success': True,
-        'has_premium': has_premium,
-        'tier': subscription.tier if subscription else 'free',
-        'games_remaining': limit_info['games_remaining'],
-        'subscription_expires': subscription.current_period_end.isoformat() if subscription else None,
-        'features': {
-            'unlimited_games': has_premium,
-            'tournament_mode': has_premium,
-            'ranked_mode': has_premium,
-            'advanced_stats': has_premium,
-            'ad_free': has_premium
-        }
-    }), 200
+@game_bp.route('/restart', methods=['POST'])
+@csrf.csrf_protect
+def restart_game():
+    """Protected endpoint for restarting a game"""
+    try:
+        data = request.get_json()
+        game_id = data.get('game_id')
+        player_id = session.get('player_id')
+        
+        if not player_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        game = games.get(game_id)
+        if not game:
+            return jsonify({'error': 'Game not found'}), 404
+        
+        # Verify player is authorized to restart
+        if not game.is_player(player_id):
+            return jsonify({'error': 'Not authorized to restart this game'}), 403
+        
+        game.restart()
+        
+        logger.info(f"Player {player_id} restarted game {game_id}")
+        
+        return jsonify({
+            'success': True,
+            'game_state': game.get_state(),
+            'csrf_token': get_csrf_token()  # Rotate token after action
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error restarting game: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@game_bp.route('/surrender', methods=['POST'])
+@csrf.csrf_protect
+def surrender_game():
+    """Protected endpoint for surrendering a game"""
+    try:
+        data = request.get_json()
+        game_id = data.get('game_id')
+        player_id = session.get('player_id')
+        
+        if not player_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        game = games.get(game_id)
+        if not game:
+            return jsonify({'error': 'Game not found'}), 404
+        
+        if not game.is_player(player_id):
+            return jsonify({'error': 'Not authorized'}), 403
+        
+        game.surrender(player_id)
+        
+        logger.info(f"Player {player_id} surrendered game {game_id}")
+        
+        return jsonify({
+            'success': True,
+            'game_state': game.get_state(),
+            'csrf_token': get_csrf_token()
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error processing surrender: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
