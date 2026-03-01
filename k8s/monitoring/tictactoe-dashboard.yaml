@@ -1,0 +1,231 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tictactoe-dashboard
+  namespace: monitoring
+data:
+  tictactoe.json: |
+    {
+      "dashboard": {
+        "title": "TicTacToe Application Metrics",
+        "tags": ["tictactoe", "production"],
+        "timezone": "browser",
+        "schemaVersion": 16,
+        "version": 1,
+        "refresh": "30s",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Request Rate",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(tictactoe_http_requests_total[5m])",
+                "legendFormat": "{{method}} {{endpoint}} - {{status}}",
+                "refId": "A"
+              }
+            ],
+            "yaxes": [{"format": "reqps", "label": "Requests/sec"}, {"show": false}],
+            "xaxis": {"mode": "time"},
+            "lines": true,
+            "fill": 1,
+            "linewidth": 2,
+            "nullPointMode": "null",
+            "tooltip": {"shared": true, "sort": 0, "value_type": "individual"}
+          },
+          {
+            "id": 2,
+            "title": "Error Rate",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(tictactoe_http_requests_total{status=~\"5..\"}[5m])",
+                "legendFormat": "5xx Errors",
+                "refId": "A"
+              },
+              {
+                "expr": "rate(tictactoe_http_requests_total{status=~\"4..\"}[5m])",
+                "legendFormat": "4xx Errors",
+                "refId": "B"
+              }
+            ],
+            "yaxes": [{"format": "reqps", "label": "Errors/sec"}, {"show": false}],
+            "xaxis": {"mode": "time"},
+            "lines": true,
+            "fill": 1,
+            "linewidth": 2,
+            "alert": {
+              "conditions": [
+                {
+                  "evaluator": {"params": [0.05], "type": "gt"},
+                  "operator": {"type": "and"},
+                  "query": {"params": ["A", "5m", "now"]},
+                  "type": "query"
+                }
+              ],
+              "name": "High Error Rate Alert"
+            }
+          },
+          {
+            "id": 3,
+            "title": "Response Time (p95, p99)",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(tictactoe_http_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "p95",
+                "refId": "A"
+              },
+              {
+                "expr": "histogram_quantile(0.99, rate(tictactoe_http_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "p99",
+                "refId": "B"
+              }
+            ],
+            "yaxes": [{"format": "s", "label": "Duration"}, {"show": false}],
+            "xaxis": {"mode": "time"},
+            "lines": true,
+            "fill": 1,
+            "linewidth": 2
+          },
+          {
+            "id": 4,
+            "title": "Active Games",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "tictactoe_active_games",
+                "legendFormat": "Active Games",
+                "refId": "A"
+              },
+              {
+                "expr": "rate(tictactoe_games_total[5m])",
+                "legendFormat": "Games Started/sec",
+                "refId": "B"
+              }
+            ],
+            "yaxes": [{"format": "short", "label": "Count"}, {"show": false}],
+            "xaxis": {"mode": "time"},
+            "lines": true,
+            "fill": 1,
+            "linewidth": 2
+          },
+          {
+            "id": 5,
+            "title": "Pod CPU Usage",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{pod=~\"tictactoe-.*\"}[5m])",
+                "legendFormat": "{{pod}}",
+                "refId": "A"
+              }
+            ],
+            "yaxes": [{"format": "percentunit", "label": "CPU"}, {"show": false}],
+            "xaxis": {"mode": "time"},
+            "lines": true,
+            "fill": 1,
+            "linewidth": 2
+          },
+          {
+            "id": 6,
+            "title": "Pod Memory Usage",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "container_memory_usage_bytes{pod=~\"tictactoe-.*\"}",
+                "legendFormat": "{{pod}}",
+                "refId": "A"
+              }
+            ],
+            "yaxes": [{"format": "bytes", "label": "Memory"}, {"show": false}],
+            "xaxis": {"mode": "time"},
+            "lines": true,
+            "fill": 1,
+            "linewidth": 2
+          },
+          {
+            "id": 7,
+            "title": "Game Outcomes",
+            "type": "piechart",
+            "gridPos": {"x": 0, "y": 24, "w": 8, "h": 8},
+            "targets": [
+              {
+                "expr": "sum by (outcome) (increase(tictactoe_games_total[1h]))",
+                "legendFormat": "{{outcome}}",
+                "refId": "A"
+              }
+            ],
+            "pieType": "pie"
+          },
+          {
+            "id": 8,
+            "title": "Pod Availability",
+            "type": "stat",
+            "gridPos": {"x": 8, "y": 24, "w": 8, "h": 8},
+            "targets": [
+              {
+                "expr": "sum(up{job=\"tictactoe\"})",
+                "refId": "A"
+              }
+            ],
+            "options": {
+              "graphMode": "area",
+              "colorMode": "value",
+              "justifyMode": "auto",
+              "textMode": "auto"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"value": 0, "color": "red"},
+                    {"value": 1, "color": "yellow"},
+                    {"value": 2, "color": "green"}
+                  ]
+                },
+                "unit": "short"
+              }
+            }
+          },
+          {
+            "id": 9,
+            "title": "Request Success Rate",
+            "type": "stat",
+            "gridPos": {"x": 16, "y": 24, "w": 8, "h": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(tictactoe_http_requests_total{status=~\"2..\"}[5m])) / sum(rate(tictactoe_http_requests_total[5m])) * 100",
+                "refId": "A"
+              }
+            ],
+            "options": {
+              "graphMode": "area",
+              "colorMode": "value",
+              "justifyMode": "auto",
+              "textMode": "auto"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"value": 0, "color": "red"},
+                    {"value": 95, "color": "yellow"},
+                    {"value": 99, "color": "green"}
+                  ]
+                },
+                "unit": "percent"
+              }
+            }
+          }
+        ]
+      }
+    }
