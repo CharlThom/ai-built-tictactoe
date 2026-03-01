@@ -1,26 +1,27 @@
 import uuid
-from datetime import datetime
+
+games_db = {}
 
 class GameState:
-    """Represents the state of a TicTacToe game"""
-    
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.board = [None] * 9  # 3x3 board as flat array
-        self.current_player = 'X'  # X always starts
-        self.status = 'in_progress'  # in_progress, won, draw
+        self.board = [None] * 9
+        self.current_player = 'X'
+        self.status = 'in_progress'
         self.winner = None
-        self.created_at = datetime.utcnow().isoformat()
-        self.updated_at = datetime.utcnow().isoformat()
+    
+    def restart(self):
+        """Reset the game to initial state while keeping the same game ID"""
+        self.board = [None] * 9
+        self.current_player = 'X'
+        self.status = 'in_progress'
+        self.winner = None
     
     def to_dict(self):
-        """Convert game state to dictionary for JSON serialization"""
         return {
             'id': self.id,
             'board': self.board,
             'current_player': self.current_player,
             'status': self.status,
-            'winner': self.winner,
-            'created_at': self.created_at,
-            'updated_at': self.updated_at
+            'winner': self.winner
         }
