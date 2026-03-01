@@ -1,0 +1,176 @@
+{
+  "testExecution": {
+    "executionId": "E2E-20240115-001",
+    "timestamp": "2024-01-15T10:30:00Z",
+    "framework": "Playwright",
+    "environment": "test",
+    "browsers": ["chromium", "firefox", "webkit"],
+    "totalDuration": "45s",
+    "summary": {
+      "total": 15,
+      "passed": 13,
+      "failed": 2,
+      "skipped": 0,
+      "passRate": "86.7%"
+    }
+  },
+  "testResults": [
+    {
+      "id": "TC-001",
+      "name": "Game board renders with 9 empty cells",
+      "suite": "Game Initialization",
+      "status": "passed",
+      "duration": "1.2s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-002",
+      "name": "Player X starts first",
+      "suite": "Game Initialization",
+      "status": "passed",
+      "duration": "0.8s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-003",
+      "name": "Current player indicator displays correctly",
+      "suite": "Game Initialization",
+      "status": "passed",
+      "duration": "0.9s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-004",
+      "name": "Reset button is visible and functional",
+      "suite": "Game Initialization",
+      "status": "passed",
+      "duration": "1.1s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-005",
+      "name": "Player X can click empty cell and mark appears",
+      "suite": "Player Moves",
+      "status": "passed",
+      "duration": "1.5s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-006",
+      "name": "Player O can click empty cell after X's turn",
+      "suite": "Player Moves",
+      "status": "passed",
+      "duration": "1.8s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-007",
+      "name": "Occupied cells cannot be clicked again",
+      "suite": "Player Moves",
+      "status": "passed",
+      "duration": "1.3s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-008",
+      "name": "Turn alternates correctly between X and O",
+      "suite": "Player Moves",
+      "status": "passed",
+      "duration": "2.1s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-009",
+      "name": "Horizontal win detection - Row 1",
+      "suite": "Win Detection",
+      "status": "passed",
+      "duration": "2.3s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-010",
+      "name": "Vertical win detection - Column 2",
+      "suite": "Win Detection",
+      "status": "passed",
+      "duration": "2.4s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-011",
+      "name": "Diagonal win detection - main diagonal",
+      "suite": "Win Detection",
+      "status": "passed",
+      "duration": "2.2s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-012",
+      "name": "Anti-diagonal win detection",
+      "suite": "Win Detection",
+      "status": "failed",
+      "duration": "2.5s",
+      "browsers": {"chromium": "failed", "firefox": "failed", "webkit": "failed"},
+      "error": "Expected winner message to be visible, but it was not found",
+      "bugId": "BUG-001"
+    },
+    {
+      "id": "TC-013",
+      "name": "Winner message displays correctly",
+      "suite": "Win Detection",
+      "status": "passed",
+      "duration": "1.9s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    },
+    {
+      "id": "TC-014",
+      "name": "Game board locks after win",
+      "suite": "Win Detection",
+      "status": "failed",
+      "duration": "2.0s",
+      "browsers": {"chromium": "failed", "firefox": "failed", "webkit": "failed"},
+      "error": "Cell was clickable after game ended",
+      "bugId": "BUG-002"
+    },
+    {
+      "id": "TC-015",
+      "name": "Draw scenario detection",
+      "suite": "Draw Detection",
+      "status": "passed",
+      "duration": "3.2s",
+      "browsers": {"chromium": "passed", "firefox": "passed", "webkit": "passed"}
+    }
+  ],
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "title": "Anti-diagonal Win Not Detected",
+      "severity": "HIGH",
+      "priority": "P1",
+      "status": "Open",
+      "affectedTests": ["TC-012"],
+      "acceptanceCriteria": "AC3"
+    },
+    {
+      "id": "BUG-002",
+      "title": "Game Board Not Locked After Win",
+      "severity": "MEDIUM",
+      "priority": "P2",
+      "status": "Open",
+      "affectedTests": ["TC-014"],
+      "acceptanceCriteria": "AC3"
+    }
+  ],
+  "acceptanceCriteria": {
+    "AC1": {"name": "Game Initialization", "status": "PASSED", "tests": ["TC-001", "TC-002", "TC-003", "TC-004"]},
+    "AC2": {"name": "Player Moves", "status": "PASSED", "tests": ["TC-005", "TC-006", "TC-007", "TC-008"]},
+    "AC3": {"name": "Win Detection", "status": "FAILED", "tests": ["TC-009", "TC-010", "TC-011", "TC-012", "TC-013", "TC-014"], "blockers": ["BUG-001", "BUG-002"]},
+    "AC4": {"name": "Draw Detection", "status": "PASSED", "tests": ["TC-015"]},
+    "AC5": {"name": "Game Reset", "status": "PASSED", "tests": ["TC-004"]}
+  },
+  "signOff": {
+    "qaApproved": false,
+    "blockers": ["BUG-001"],
+    "readyForProduction": false,
+    "notes": "Critical bug in anti-diagonal win detection must be fixed before release"
+  }
+}
