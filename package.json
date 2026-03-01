@@ -1,41 +1,22 @@
 {
-  "name": "tictactoe",
+  "name": "tictactoe-monorepo",
   "version": "1.0.0",
-  "type": "module",
-  "description": "TicTacToe game built with React and Vite",
+  "private": true,
+  "description": "TicTacToe monorepo with frontend and shared utilities",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "eslint src --ext js,jsx --fix",
-    "format": "prettier --write \"src/**/*.{js,jsx,css}\""
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean && rm -rf node_modules"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
-    "@testing-library/react": "^14.1.2",
-    "@testing-library/jest-dom": "^6.1.5",
-    "@testing-library/user-event": "^14.5.1",
-    "jsdom": "^23.0.1",
-    "vitest": "^1.0.4",
-    "@vitest/ui": "^1.0.4",
-    "@vitest/coverage-v8": "^1.0.4",
-    "eslint": "^8.55.0",
-    "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
-    "prettier": "^3.1.1",
-    "vite": "^5.0.8"
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.6"
   },
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=9.0.0"
-  }
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
 }
