@@ -1,0 +1,134 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+data:
+  tictactoe-alerts.yml: |
+    groups:
+    - name: tictactoe.rules
+      interval: 30s
+      rules:
+      
+      # Pod Crash Alerts
+      - alert: TicTacToePodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total{namespace="tictactoe"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: pod
+        annotations:
+          summary: "Pod {{ $labels.pod }} is crash looping"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last 15 minutes."
+      
+      - alert: TicTacToePodNotReady
+        expr: kube_pod_status_phase{namespace="tictactoe", phase!="Running"} == 1
+        for: 5m
+        labels:
+          severity: critical
+          component: pod
+        annotations:
+          summary: "Pod {{ $labels.pod }} is not ready"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been in {{ $labels.phase }} state for more than 5 minutes."
+      
+      # High Error Rate Alerts
+      - alert: TicTacToeHighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{namespace="tictactoe", status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{namespace="tictactoe"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "High error rate detected in TicTacToe application"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%) over the last 5 minutes."
+      
+      - alert: TicTacToeHighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{namespace="tictactoe"}[5m])) by (le)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "High latency in TicTacToe application"
+          description: "95th percentile latency is {{ $value }}s (threshold: 1s) over the last 5 minutes."
+      
+      # Resource Exhaustion Alerts
+      - alert: TicTacToePodMemoryExhaustion
+        expr: |
+          (
+            container_memory_usage_bytes{namespace="tictactoe", container!=""}
+            /
+            container_spec_memory_limit_bytes{namespace="tictactoe", container!=""}
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          component: resources
+        annotations:
+          summary: "Pod {{ $labels.pod }} is running out of memory"
+          description: "Pod {{ $labels.pod }} memory usage is at {{ $value | humanizePercentage }} of limit."
+      
+      - alert: TicTacToePodCPUExhaustion
+        expr: |
+          (
+            rate(container_cpu_usage_seconds_total{namespace="tictactoe", container!=""}[5m])
+            /
+            container_spec_cpu_quota{namespace="tictactoe", container!=""}
+            * 100000
+          ) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          component: resources
+        annotations:
+          summary: "Pod {{ $labels.pod }} CPU usage is high"
+          description: "Pod {{ $labels.pod }} CPU usage is at {{ $value | humanizePercentage }} of limit for more than 10 minutes."
+      
+      - alert: TicTacToePodDiskPressure
+        expr: |
+          (
+            container_fs_usage_bytes{namespace="tictactoe", container!=""}
+            /
+            container_fs_limit_bytes{namespace="tictactoe", container!=""}
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: resources
+        annotations:
+          summary: "Pod {{ $labels.pod }} disk usage is high"
+          description: "Pod {{ $labels.pod }} disk usage is at {{ $value | humanizePercentage }} of limit."
+      
+      # Deployment Health
+      - alert: TicTacToeDeploymentReplicasMismatch
+        expr: |
+          kube_deployment_spec_replicas{namespace="tictactoe"}
+          !=
+          kube_deployment_status_replicas_available{namespace="tictactoe"}
+        for: 10m
+        labels:
+          severity: warning
+          component: deployment
+        annotations:
+          summary: "Deployment {{ $labels.deployment }} has mismatched replicas"
+          description: "Deployment {{ $labels.deployment }} has {{ $value }} replicas available but expects different count."
+      
+      - alert: TicTacToeNoPodsAvailable
+        expr: kube_deployment_status_replicas_available{namespace="tictactoe"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: deployment
+        annotations:
+          summary: "No pods available for deployment {{ $labels.deployment }}"
+          description: "Deployment {{ $labels.deployment }} has zero available replicas for more than 2 minutes. Service is down!"
