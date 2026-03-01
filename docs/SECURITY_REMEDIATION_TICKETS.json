@@ -1,0 +1,220 @@
+[
+  {
+    "ticket_id": "SEC-001",
+    "title": "Implement Cryptographically Secure Session Token Generation",
+    "severity": "HIGH",
+    "priority": "P1",
+    "status": "OPEN",
+    "component": "Authentication Service",
+    "finding_ref": "FINDING-001",
+    "description": "Replace current session token generation with cryptographically secure random number generator to prevent session prediction attacks.",
+    "acceptance_criteria": [
+      "Session tokens generated using secrets.token_urlsafe(32) or equivalent",
+      "Minimum 256 bits of entropy per token",
+      "Token uniqueness verified before assignment",
+      "Token rotation implemented on privilege changes",
+      "Unit tests verify token randomness and uniqueness"
+    ],
+    "estimated_effort": "4 hours",
+    "assigned_to": null,
+    "due_date": "2024-01-22",
+    "dependencies": [],
+    "testing_requirements": [
+      "Statistical randomness test on 10,000 generated tokens",
+      "Collision test with 100,000 tokens",
+      "Performance test: token generation < 10ms"
+    ]
+  },
+  {
+    "ticket_id": "SEC-002",
+    "title": "Implement Session Expiration and Timeout Mechanism",
+    "severity": "MEDIUM",
+    "priority": "P2",
+    "status": "OPEN",
+    "component": "Session Management",
+    "finding_ref": "FINDING-002",
+    "description": "Add automatic session expiration with idle timeout and absolute timeout to reduce session hijacking risk.",
+    "acceptance_criteria": [
+      "30-minute idle timeout implemented",
+      "24-hour absolute timeout implemented",
+      "Session refresh endpoint created",
+      "Expired sessions automatically cleaned up",
+      "Client receives clear expiration warnings"
+    ],
+    "estimated_effort": "8 hours",
+    "assigned_to": null,
+    "due_date": "2024-01-29",
+    "dependencies": ["SEC-001"],
+    "testing_requirements": [
+      "Verify session expires after 30 min inactivity",
+      "Verify session expires after 24 hours regardless of activity",
+      "Test session refresh extends timeout correctly",
+      "Verify cleanup job removes expired sessions"
+    ]
+  },
+  {
+    "ticket_id": "SEC-003",
+    "title": "Add Rate Limiting to Authentication Endpoints",
+    "severity": "HIGH",
+    "priority": "P1",
+    "status": "OPEN",
+    "component": "Authentication API",
+    "finding_ref": "FINDING-003",
+    "description": "Implement rate limiting on login and registration endpoints to prevent brute force attacks.",
+    "acceptance_criteria": [
+      "Rate limit: 5 login attempts per 15 minutes per IP",
+      "Progressive delays after failed attempts (1s, 2s, 4s, 8s, 16s)",
+      "CAPTCHA integration after 3 failed attempts",
+      "Logging of rate limit violations",
+      "429 status code with Retry-After header returned"
+    ],
+    "estimated_effort": "12 hours",
+    "assigned_to": null,
+    "due_date": "2024-01-22",
+    "dependencies": [],
+    "testing_requirements": [
+      "Automated test: 6 rapid login attempts blocked",
+      "Verify rate limit resets after timeout",
+      "Test CAPTCHA appears after threshold",
+      "Load test: rate limiting doesn't affect legitimate users"
+    ]
+  },
+  {
+    "ticket_id": "SEC-004",
+    "title": "Implement Comprehensive API Input Validation",
+    "severity": "MEDIUM",
+    "priority": "P2",
+    "status": "OPEN",
+    "component": "API Layer",
+    "finding_ref": "FINDING-004",
+    "description": "Add strict input validation schemas for all API endpoints to prevent injection and invalid data.",
+    "acceptance_criteria": [
+      "JSON schema validation for all endpoints",
+      "Move coordinates validated as integers [0-2]",
+      "Reject requests with unexpected fields",
+      "String inputs sanitized and length-limited",
+      "Return 400 with detailed validation errors"
+    ],
+    "estimated_effort": "10 hours",
+    "assigned_to": null,
+    "due_date": "2024-01-29",
+    "dependencies": [],
+    "testing_requirements": [
+      "Test invalid coordinate types rejected",
+      "Test out-of-range coordinates rejected",
+      "Test SQL injection attempts blocked",
+      "Test XSS payloads sanitized",
+      "Fuzz testing on all endpoints"
+    ]
+  },
+  {
+    "ticket_id": "SEC-005",
+    "title": "Configure Secure CORS and CSRF Protection",
+    "severity": "MEDIUM",
+    "priority": "P2",
+    "status": "OPEN",
+    "component": "API Security",
+    "finding_ref": "FINDING-005",
+    "description": "Implement proper CORS configuration and CSRF token protection for state-changing operations.",
+    "acceptance_criteria": [
+      "CORS limited to explicit allowed origins (no wildcards)",
+      "credentials: true only for trusted origins",
+      "CSRF tokens required for POST/PUT/DELETE",
+      "Preflight requests handled correctly",
+      "Security headers configured (CSP, X-Frame-Options, etc.)"
+    ],
+    "estimated_effort": "6 hours",
+    "assigned_to": null,
+    "due_date": "2024-02-05",
+    "dependencies": [],
+    "testing_requirements": [
+      "Verify unauthorized origins blocked",
+      "Test CSRF token validation",
+      "Verify preflight OPTIONS requests",
+      "Security header scanner validation"
+    ]
+  },
+  {
+    "ticket_id": "SEC-006",
+    "title": "Implement Global API Rate Limiting",
+    "severity": "HIGH",
+    "priority": "P1",
+    "status": "OPEN",
+    "component": "API Gateway",
+    "finding_ref": "FINDING-006",
+    "description": "Add rate limiting to all API endpoints to prevent DoS attacks and resource exhaustion.",
+    "acceptance_criteria": [
+      "Per-user limit: 100 requests/minute",
+      "Per-IP limit: 200 requests/minute",
+      "Burst protection with token bucket algorithm",
+      "429 status with Retry-After header",
+      "Rate limit metrics and monitoring"
+    ],
+    "estimated_effort": "10 hours",
+    "assigned_to": null,
+    "due_date": "2024-01-22",
+    "dependencies": [],
+    "testing_requirements": [
+      "Load test: verify limits enforced under load",
+      "Test burst handling",
+      "Verify Retry-After header accuracy",
+      "Performance test: rate limiting overhead < 5ms"
+    ]
+  },
+  {
+    "ticket_id": "SEC-007",
+    "title": "Enforce Server-Side Game State Validation",
+    "severity": "CRITICAL",
+    "priority": "P0",
+    "status": "OPEN",
+    "component": "Game Logic",
+    "finding_ref": "FINDING-007",
+    "description": "Move all game state validation to server-side to prevent cheating and ensure game integrity.",
+    "acceptance_criteria": [
+      "All move validation performed server-side",
+      "Server maintains authoritative game state",
+      "Client-submitted state ignored/rejected",
+      "Turn order enforced server-side",
+      "Win conditions calculated server-side only",
+      "Game state checksums implemented"
+    ],
+    "estimated_effort": "16 hours",
+    "assigned_to": null,
+    "due_date": "2024-01-19",
+    "dependencies": [],
+    "testing_requirements": [
+      "Test invalid moves rejected (wrong turn, occupied cell)",
+      "Test client cannot manipulate game state",
+      "Test win condition tampering prevented",
+      "Integration tests for complete game flows",
+      "Penetration test: attempt to cheat via API"
+    ]
+  },
+  {
+    "ticket_id": "SEC-008",
+    "title": "Add Game State Integrity Protection and Encryption",
+    "severity": "LOW",
+    "priority": "P3",
+    "status": "OPEN",
+    "component": "Data Storage",
+    "finding_ref": "FINDING-008",
+    "description": "Implement HMAC signatures and encryption for stored game state to prevent tampering and protect privacy.",
+    "acceptance_criteria": [
+      "HMAC-SHA256 signatures on all game state records",
+      "Sensitive player data encrypted at rest (AES-256)",
+      "Audit log for all state modifications",
+      "Signature verification on state retrieval",
+      "Key rotation mechanism implemented"
+    ],
+    "estimated_effort": "12 hours",
+    "assigned_to": null,
+    "due_date": "2024-02-15",
+    "dependencies": ["SEC-007"],
+    "testing_requirements": [
+      "Verify tampered state rejected",
+      "Test encryption/decryption performance",
+      "Verify audit logs capture all changes",
+      "Test key rotation doesn't break existing data"
+    ]
+  }
+]
